@@ -43,7 +43,9 @@ function App() {
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {
     if (quantity <= 0) {
-      setCart((prevCart) => prevCart.filter((item) => item.product.id !== productId));
+      setCart((prevCart) =>
+        prevCart.filter((item) => item.product.id !== productId)
+      );
     } else {
       setCart((prevCart) =>
         prevCart.map((item) =>
@@ -54,7 +56,9 @@ function App() {
   };
 
   const handleRemoveItem = (productId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.product.id !== productId));
+    setCart((prevCart) =>
+      prevCart.filter((item) => item.product.id !== productId)
+    );
   };
 
   const handlePlaceOrder = async () => {
@@ -69,7 +73,7 @@ function App() {
       setCart([]);
       setPage('confirmation');
     } else {
-      alert(`Error placing order: ${result.error}`);
+      alert(`Ошибка при оформлении заказа: ${result.error}`);
     }
   };
 
@@ -81,29 +85,43 @@ function App() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-        <p className="text-slate-600">Loading menu...</p>
+        <p className="text-slate-600">Загрузка меню...</p>
       </div>
     );
   }
 
   if (page === 'confirmation') {
-    return <OrderConfirmation orderId={orderId} onNewOrder={handleNewOrder} />;
+    return (
+      <OrderConfirmation
+        orderId={orderId}
+        onNewOrder={handleNewOrder}
+      />
+    );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="max-w-6xl mx-auto p-4 sm:p-6">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold text-slate-800">Order System</h1>
+          <h1 className="text-4xl font-bold text-slate-800">
+            Система заказов
+          </h1>
+
           <div className="flex items-center gap-2 bg-white rounded-lg shadow px-4 py-2">
             <ShoppingCart className="w-5 h-5 text-blue-500" />
-            <span className="font-semibold text-slate-700">{cart.length}</span>
+            <span className="font-semibold text-slate-700">
+              {cart.length}
+            </span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <Menu categories={categories} products={products} onAddToCart={handleAddToCart} />
+            <Menu
+              categories={categories}
+              products={products}
+              onAddToCart={handleAddToCart}
+            />
           </div>
 
           <div className="lg:col-span-1">
