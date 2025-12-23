@@ -16,6 +16,7 @@ function App() {
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderId, setOrderId] = useState<string>('');
 
+  /* ---------- LOAD MENU ---------- */
   useEffect(() => {
     const loadMenu = async () => {
       const { categories, products } = await fetchMenu();
@@ -27,6 +28,7 @@ function App() {
     loadMenu();
   }, []);
 
+  /* ---------- CART ACTIONS ---------- */
   const handleAddToCart = (product: Product) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
@@ -57,6 +59,7 @@ function App() {
     setCart((prev) => prev.filter((i) => i.product.id !== productId));
   };
 
+  /* ---------- ORDER ---------- */
   const handlePlaceOrder = async () => {
     if (cart.length === 0) return;
 
@@ -115,13 +118,13 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Шапка */}
+        {/* HEADER */}
         <div className="flex items-center justify-between mb-10">
           <h1 className="text-4xl font-extrabold text-slate-900">
             Система заказов
           </h1>
 
-          {/* КНОПКА КОРЗИНЫ */}
+          {/* CART BUTTON */}
           <div
             onClick={() => setPage('cart')}
             className="cursor-pointer flex items-center gap-2 bg-white rounded-xl shadow px-4 py-2"
@@ -133,11 +136,13 @@ function App() {
           </div>
         </div>
 
-        {/* Меню */}
+        {/* MENU */}
         <Menu
           categories={categories}
           products={products}
+          cart={cart}
           onAddToCart={handleAddToCart}
+          onUpdateQuantity={handleUpdateQuantity}
         />
       </div>
     </div>
