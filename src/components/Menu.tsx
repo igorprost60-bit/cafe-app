@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { Category, Product, CartItem } from '../lib/db';
 import { Plus, Minus } from 'lucide-react';
 
@@ -17,11 +17,16 @@ export function Menu({
   onAddToCart,
   onUpdateQuantity,
 }: MenuProps) {
-  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(
-    categories[0]?.id ?? null
-  );
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
 
-  /* productId → quantity */
+  // Если категории подгрузились — выставим первую активной (один раз)
+  useEffect(() => {
+    if (!activeCategoryId && categories.length > 0) {
+      setActiveCategoryId(categories[0].id);
+    }
+  }, [categories, activeCategoryId]);
+
+  // productId → quantity
   const cartMap = useMemo(() => {
     const map: Record<string, number> = {};
     cart.forEach((item) => {
@@ -30,13 +35,31 @@ export function Menu({
     return map;
   }, [cart]);
 
-  const activeProducts = products.filter(
-    (p) => p.category_id === activeCategoryId
-  );
+  const activeProducts = useMemo(() => {
+    if (!activeCategoryId) return [];
+    return products.filter((p) => p.category_id === activeCategoryId);
+  }, [products, activeCategoryId]);
+
+  // Универсальная подпись категории (чтобы не было пустых табов)
+  const getCategoryLabel = (category: Category) => {
+    // @ts-expect-error: display_name может появиться позже в типах
+    const displayName = category.display_name as string | undefined;
+    const name = category.name as string | undefined;
+
+    return (displayName?.trim() || name?.trim() || 'Категория');
+  };
+
+  if (categories.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl shadow p-6">
+        <p className="text-slate-600">Категории не найдены</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10">
-      {/* ===== CATEGORY TABS (VISIBLE + STICKY) ===== */}
+      {/* ===== CATEGORY TABS ===== */}
       <div className="sticky top-0 z-30 bg-slate-50 -mx-4 px-4 pt-4 pb-3">
         <div className="flex gap-3 overflow-x-auto">
           {categories.map((category) => {
@@ -53,7 +76,7 @@ export function Menu({
                       : 'bg-white text-slate-700 border hover:bg-slate-100'
                   }`}
               >
-                {category.display_name}
+                {getCategoryLabel(category)}
               </button>
             );
           })}
@@ -71,15 +94,12 @@ export function Menu({
               className="bg-white rounded-2xl shadow p-6 flex flex-col justify-between"
             >
               <div>
-                <h3 className="text-lg font-bold mb-1">
-                  {product.name}
-                </h3>
+                <h3 className="text-lg font-bold mb-1">{product.name}</h3>
                 <p className="text-2xl font-extrabold text-purple-600 mb-6">
                   ${(product.price / 100).toFixed(2)}
                 </p>
               </div>
 
-              {/* BUTTON / COUNTER */}
               {quantity === 0 ? (
                 <button
                   onClick={() => onAddToCart(product)}
@@ -90,22 +110,16 @@ export function Menu({
               ) : (
                 <div className="flex items-center justify-between bg-slate-100 rounded-xl px-4 py-2">
                   <button
-                    onClick={() =>
-                      onUpdateQuantity(product.id, quantity - 1)
-                    }
+                    onClick={() => onUpdateQuantity(product.id, quantity - 1)}
                     className="p-2 rounded-lg bg-white shadow"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
 
-                  <span className="font-bold text-lg">
-                    {quantity}
-                  </span>
+                  <span className="font-bold text-lg">{quantity}</span>
 
                   <button
-                    onClick={() =>
-                      onUpdateQuantity(product.id, quantity + 1)
-                    }
+                    onClick={() => onUpdateQuantity(product.id, quantity + 1)}
                     className="p-2 rounded-lg bg-white shadow"
                   >
                     <Plus className="w-4 h-4" />
