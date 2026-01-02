@@ -8,6 +8,7 @@ interface MenuProps {
   cart: CartItem[];
   onAddToCart: (product: Product) => void;
   onUpdateQuantity: (productId: string, quantity: number) => void;
+  onSelectProduct: (product: Product) => void;
 }
 
 export function Menu({
@@ -16,6 +17,7 @@ export function Menu({
   cart,
   onAddToCart,
   onUpdateQuantity,
+  onSelectProduct,
 }: MenuProps) {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
 
@@ -94,7 +96,10 @@ export function Menu({
               aspect-[9/14] flex flex-col"
             >
               {/* IMAGE */}
-              <div className="flex-1 bg-slate-100 overflow-hidden">
+              <button
+                onClick={() => onSelectProduct(product)}
+                className="flex-1 bg-slate-100 overflow-hidden cursor-pointer hover:opacity-80 transition"
+              >
                 {product.image_url ? (
                   <img
                     src={product.image_url}
@@ -104,7 +109,7 @@ export function Menu({
                 ) : (
                   <div className="w-full h-full bg-slate-200" />
                 )}
-              </div>
+              </button>
 
               {/* BOTTOM PANEL — COMPACT */}
               <div className="px-3 py-2 border-t border-slate-100">
@@ -121,9 +126,7 @@ export function Menu({
                 {/* 3️⃣ Кнопки */}
                 <div className="mt-1 flex items-center justify-between">
                   <button
-                    onClick={() => {
-                      // TODO: открыть детали товара
-                    }}
+                    onClick={() => onSelectProduct(product)}
                     className="text-xs text-slate-500 hover:text-slate-900 transition"
                   >
                     Подробнее →

@@ -11,9 +11,10 @@ import { OrderConfirmation } from './components/OrderConfirmation';
 import { notifyUserOrderAccepted } from './lib/telegramNotify';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage, CheckoutData } from './pages/CheckoutPage';
+import { ProductDetailPage } from './pages/ProductDetailPage';
 import { ShoppingCart } from 'lucide-react';
 
-type PageType = 'menu' | 'cart' | 'checkout' | 'confirmation';
+type PageType = 'menu' | 'cart' | 'checkout' | 'confirmation' | 'product-detail';
 
 type TgDiag = {
   hasTg: boolean;
@@ -29,6 +30,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderId, setOrderId] = useState<string>('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   /* ---------- TELEGRAM DIAGNOSTICS ---------- */
   const [tgDiag, setTgDiag] = useState<TgDiag>({ hasTg: false });
@@ -119,6 +121,17 @@ function App() {
   const handleNewOrder = () => {
     setPage('menu');
     setCart([]);
+    setSelectedProduct(null);
+  };
+
+  const handleSelectProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setPage('product-detail');
+  };
+
+  const handleBackFromProduct = () => {
+    setSelectedProduct(null);
+    setPage('menu');
   };
 
   /* ---------- LOADING ---------- */
@@ -151,6 +164,17 @@ function App() {
         onBack={() => setPage('cart')}
         onConfirm={handleConfirmOrder}
         loading={orderLoading}
+      />
+    );
+  }
+
+  /* ---------- PRODUCT DETAIL ---------- */
+  if (page === 'product-detail' && selectedProduct) {
+    return (
+      <ProductDetailPage
+        product={selectedProduct}
+        onBack={handleBackFromProduct}
+        onAddToCart={handleAddToCart}
       />
     );
   }
@@ -197,6 +221,7 @@ function App() {
           cart={cart}
           onAddToCart={handleAddToCart}
           onUpdateQuantity={handleUpdateQuantity}
+          onSelectProduct={handleSelectProduct}
         />
       </div>
 
