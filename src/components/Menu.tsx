@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useState } from 'react';
 import { Category, Product, CartItem } from '../lib/db';
-import { Plus, Minus, ShoppingCart } from 'lucide-react';
+import { CartControl } from './CartControl';
 
 interface MenuProps {
   categories: Category[];
@@ -111,19 +111,19 @@ export function Menu({
                 )}
               </button>
 
-              {/* BOTTOM PANEL — COMPACT */}
+              {/* BOTTOM PANEL */}
               <div className="px-3 py-2 border-t border-slate-100">
-                {/* 1️⃣ Название */}
+                {/* Название */}
                 <h3 className="text-sm font-semibold leading-snug line-clamp-2 text-slate-900">
                   {product.name}
                 </h3>
 
-                {/* 2️⃣ Цена */}
+                {/* Цена */}
                 <p className="text-sm font-bold text-slate-900 mt-0.5">
                   ${(product.price / 100).toFixed(2)}
                 </p>
 
-                {/* 3️⃣ Кнопки */}
+                {/* Кнопки */}
                 <div className="mt-1 flex items-center justify-between">
                   <button
                     onClick={() => onSelectProduct(product)}
@@ -132,43 +132,12 @@ export function Menu({
                     Подробнее →
                   </button>
 
-                  {quantity === 0 ? (
-                    <button
-                      onClick={() => onAddToCart(product)}
-                      className="w-8 h-8 rounded-full
-                      bg-slate-900 text-white
-                      flex items-center justify-center
-                      active:scale-95 transition"
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                    </button>
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() =>
-                          onUpdateQuantity(product.id, quantity - 1)
-                        }
-                        className="w-6 h-6 flex items-center justify-center
-                        rounded-full border border-slate-300"
-                      >
-                        <Minus className="w-3 h-3" />
-                      </button>
-
-                      <span className="text-xs font-bold w-4 text-center">
-                        {quantity}
-                      </span>
-
-                      <button
-                        onClick={() =>
-                          onUpdateQuantity(product.id, quantity + 1)
-                        }
-                        className="w-6 h-6 flex items-center justify-center
-                        rounded-full border border-slate-300"
-                      >
-                        <Plus className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
+                  <CartControl
+                    product={product}
+                    quantity={quantity}
+                    onAddToCart={onAddToCart}
+                    onUpdateQuantity={onUpdateQuantity}
+                  />
                 </div>
               </div>
             </div>
