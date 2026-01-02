@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useState } from 'react';
 import { Category, Product, CartItem } from '../lib/db';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, ShoppingCart } from 'lucide-react';
 
 interface MenuProps {
   categories: Category[];
@@ -19,14 +19,14 @@ export function Menu({
 }: MenuProps) {
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
 
-  // Если категории подгрузились — выставим первую активной (один раз)
+  /* ---------- INIT ACTIVE CATEGORY ---------- */
   useEffect(() => {
     if (!activeCategoryId && categories.length > 0) {
       setActiveCategoryId(categories[0].id);
     }
   }, [categories, activeCategoryId]);
 
-  // productId → quantity
+  /* ---------- CART MAP ---------- */
   const cartMap = useMemo(() => {
     const map: Record<string, number> = {};
     cart.forEach((item) => {
@@ -35,18 +35,17 @@ export function Menu({
     return map;
   }, [cart]);
 
+  /* ---------- ACTIVE PRODUCTS ---------- */
   const activeProducts = useMemo(() => {
     if (!activeCategoryId) return [];
     return products.filter((p) => p.category_id === activeCategoryId);
   }, [products, activeCategoryId]);
 
-  // Универсальная подпись категории (чтобы не было пустых табов)
+  /* ---------- CATEGORY LABEL ---------- */
   const getCategoryLabel = (category: Category) => {
-    // @ts-expect-error: display_name может появиться позже в типах
+    // @ts-expect-error possible future field
     const displayName = category.display_name as string | undefined;
-    const name = category.name as string | undefined;
-
-    return (displayName?.trim() || name?.trim() || 'Категория');
+    return displayName?.trim() || category.name || 'Категория';
   };
 
   if (categories.length === 0) {
@@ -58,7 +57,7 @@ export function Menu({
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       {/* ===== CATEGORY TABS ===== */}
       <div className="sticky top-0 z-30 bg-slate-50 -mx-4 px-4 pt-4 pb-3">
         <div className="flex gap-3 overflow-x-auto">
@@ -69,7 +68,7 @@ export function Menu({
               <button
                 key={category.id}
                 onClick={() => setActiveCategoryId(category.id)}
-                className={`whitespace-nowrap px-6 py-3 rounded-full font-semibold transition
+                className={`whitespace-nowrap px-5 py-2.5 rounded-full font-semibold transition
                   ${
                     isActive
                       ? 'bg-purple-600 text-white shadow'
@@ -84,48 +83,91 @@ export function Menu({
       </div>
 
       {/* ===== PRODUCTS ===== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
         {activeProducts.map((product) => {
           const quantity = cartMap[product.id] ?? 0;
 
           return (
             <div
               key={product.id}
-              className="bg-white rounded-2xl shadow p-6 flex flex-col justify-between"
+              className="rounded-2xl overflow-hidden shadow bg-white
+              aspect-[9/14] flex flex-col"
             >
-              <div>
-                <h3 className="text-lg font-bold mb-1">{product.name}</h3>
-                <p className="text-2xl font-extrabold text-purple-600 mb-6">
-                  ${(product.price / 100).toFixed(2)}
-                </p>
+              {/* IMAGE */}
+              <div className="flex-1 bg-slate-100 overflow-hidden">
+                {product.image_url ? (
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-slate-200" />
+                )}
               </div>
 
-              {quantity === 0 ? (
-                <button
-                  onClick={() => onAddToCart(product)}
-                  className="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition"
-                >
-                  Добавить
-                </button>
-              ) : (
-                <div className="flex items-center justify-between bg-slate-100 rounded-xl px-4 py-2">
+              {/* BOTTOM PANEL — COMPACT */}
+              <div className="px-3 py-2 border-t border-slate-100">
+                {/* 1️⃣ Название */}
+                <h3 className="text-sm font-semibold leading-snug line-clamp-2 text-slate-900">
+                  {product.name}
+                </h3>
+
+                {/* 2️⃣ Цена */}
+                <p className="text-sm font-bold text-slate-900 mt-0.5">
+                  ${(product.price / 100).toFixed(2)}
+                </p>
+
+                {/* 3️⃣ Кнопки */}
+                <div className="mt-1 flex items-center justify-between">
                   <button
-                    onClick={() => onUpdateQuantity(product.id, quantity - 1)}
-                    className="p-2 rounded-lg bg-white shadow"
+                    onClick={() => {
+                      // TODO: открыть детали товара
+                    }}
+                    className="text-xs text-slate-500 hover:text-slate-900 transition"
                   >
-                    <Minus className="w-4 h-4" />
+                    Подробнее →
                   </button>
 
-                  <span className="font-bold text-lg">{quantity}</span>
+                  {quantity === 0 ? (
+                    <button
+                      onClick={() => onAddToCart(product)}
+                      className="w-8 h-8 rounded-full
+                      bg-slate-900 text-white
+                      flex items-center justify-center
+                      active:scale-95 transition"
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() =>
+                          onUpdateQuantity(product.id, quantity - 1)
+                        }
+                        className="w-6 h-6 flex items-center justify-center
+                        rounded-full border border-slate-300"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
 
-                  <button
-                    onClick={() => onUpdateQuantity(product.id, quantity + 1)}
-                    className="p-2 rounded-lg bg-white shadow"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
+                      <span className="text-xs font-bold w-4 text-center">
+                        {quantity}
+                      </span>
+
+                      <button
+                        onClick={() =>
+                          onUpdateQuantity(product.id, quantity + 1)
+                        }
+                        className="w-6 h-6 flex items-center justify-center
+                        rounded-full border border-slate-300"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           );
         })}
