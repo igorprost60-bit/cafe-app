@@ -1,120 +1,90 @@
-import { useMemo, useState } from 'react';
-import { Category, Product, CartItem } from '../lib/db';
-import { Plus, Minus } from 'lucide-react';
+/*
+  # Create order management schema
 
-interface MenuProps {
-  categories: Category[];
-  products: Product[];
-  cart: CartItem[];
-  onAddToCart: (product: Product) => void;
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-}
+  1. New Tables
+    - `categories`
+      - `id` (uuid, primary key)
+      - `name` (text, unique)
+      - `created_at` (timestamp)
 
-export function Menu({
-  categories,
-  products,
-  cart,
-  onAddToCart,
-  onUpdateQuantity,
-}: MenuProps) {
-  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(
-    categories[0]?.id ?? null
-  );
+    - `products`
+      - `id` (uuid, primary key)
+      - `category_id` (uuid, foreign key)
+      - `name` (text)
+      - `price` (integer, in cents)
+      - `created_at` (timestamp)
 
-  /* productId → quantity */
-  const cartMap = useMemo(() => {
-    const map: Record<string, number> = {};
-    cart.forEach((item) => {
-      map[item.product.id] = item.quantity;
-    });
-    return map;
-  }, [cart]);
+    - `orders`
+      - `id` (uuid, primary key)
+      - `total_price` (integer, in cents)
+      - `created_at` (timestamp)
 
-  const activeProducts = products.filter(
-    (p) => p.category_id === activeCategoryId
-  );
+    - `order_items`
+      - `id` (uuid, primary key)
+      - `order_id` (uuid, foreign key)
+      - `product_id` (uuid, foreign key)
+      - `quantity` (integer)
+      - `price` (integer, price at time of order, in cents)
 
-  return (
-    <div className="space-y-8">
-      {/* ===== CATEGORY TABS ===== */}
-      <div className="flex gap-3 overflow-x-auto pb-2">
-        {categories.map((category) => {
-          const isActive = category.id === activeCategoryId;
+  2. Security
+    - Enable RLS on all tables
+    - Public read access to categories and products (menu display)
+    - Public read/insert access to orders and order_items (anonymous users can browse and order)
+*/
 
-          return (
-            <button
-              key={category.id}
-              onClick={() => setActiveCategoryId(category.id)}
-              className={`whitespace-nowrap px-5 py-2 rounded-full font-semibold transition
-                ${
-                  isActive
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-            >
-              {/* 🔑 ТОЛЬКО ДАННЫЕ ИЗ БД */}
-              {category.display_name}
-            </button>
-          );
-        })}
-      </div>
+CREATE TABLE IF NOT EXISTS categories (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text UNIQUE NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
 
-      {/* ===== PRODUCTS ===== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-        {activeProducts.map((product) => {
-          const quantity = cartMap[product.id] ?? 0;
+CREATE TABLE IF NOT EXISTS products (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  category_id uuid NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  price integer NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
 
-          return (
-            <div
-              key={product.id}
-              className="bg-white rounded-2xl shadow p-6 flex flex-col justify-between"
-            >
-              <div>
-                <h3 className="text-lg font-bold mb-1">
-                  {product.name}
-                </h3>
-                <p className="text-2xl font-extrabold text-purple-600 mb-6">
-                  ${(product.price / 100).toFixed(2)}
-                </p>
-              </div>
+CREATE TABLE IF NOT EXISTS orders (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  total_price integer NOT NULL DEFAULT 0,
+  created_at timestamptz DEFAULT now()
+);
 
-              {/* BUTTON / COUNTER */}
-              {quantity === 0 ? (
-                <button
-                  onClick={() => onAddToCart(product)}
-                  className="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition"
-                >
-                  Добавить
-                </button>
-              ) : (
-                <div className="flex items-center justify-between bg-slate-100 rounded-xl px-4 py-2">
-                  <button
-                    onClick={() =>
-                      onUpdateQuantity(product.id, quantity - 1)
-                    }
-                    className="p-2 rounded-lg bg-white shadow"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
+CREATE TABLE IF NOT EXISTS order_items (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  product_id uuid NOT NULL REFERENCES products(id),
+  quantity integer NOT NULL DEFAULT 1,
+  price integer NOT NULL
+);
 
-                  <span className="font-bold text-lg">
-                    {quantity}
-                  </span>
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 
-                  <button
-                    onClick={() =>
-                      onUpdateQuantity(product.id, quantity + 1)
-                    }
-                    className="p-2 rounded-lg bg-white shadow"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+CREATE POLICY "Categories are publicly readable"
+  ON categories FOR SELECT
+  USING (true);
+
+CREATE POLICY "Products are publicly readable"
+  ON products FOR SELECT
+  USING (true);
+
+CREATE POLICY "Orders are publicly readable"
+  ON orders FOR SELECT
+  USING (true);
+
+CREATE POLICY "Orders can be publicly created"
+  ON orders FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Order items are publicly readable"
+  ON order_items FOR SELECT
+  USING (true);
+
+CREATE POLICY "Order items can be publicly created"
+  ON order_items FOR INSERT
+  WITH CHECK (true);
