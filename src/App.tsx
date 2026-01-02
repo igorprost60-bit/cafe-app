@@ -8,11 +8,18 @@ import {
 } from './lib/db';
 import { Menu } from './components/Menu';
 import { OrderConfirmation } from './components/OrderConfirmation';
+import { notifyUserOrderAccepted } from './lib/telegramNotify';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage, CheckoutData } from './pages/CheckoutPage';
 import { ShoppingCart } from 'lucide-react';
 
 type PageType = 'menu' | 'cart' | 'checkout' | 'confirmation';
+
+type TgDiag = {
+  hasTg: boolean;
+  initData?: string;
+  user?: any;
+};
 
 function App() {
   const [page, setPage] = useState<PageType>('menu');
@@ -23,15 +30,25 @@ function App() {
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderId, setOrderId] = useState<string>('');
 
-  /* ---------- TELEGRAM DIAGNOSTICS (НИЧЕГО НЕ ЛОМАЕТ) ---------- */
+  /* ---------- TELEGRAM DIAGNOSTICS ---------- */
+  const [tgDiag, setTgDiag] = useState<TgDiag>({ hasTg: false });
+
   useEffect(() => {
     const tg = (window as any)?.Telegram?.WebApp;
 
-    console.log('--- Telegram diagnostics ---');
-    console.log('Telegram WebApp:', tg);
-    console.log('initData:', tg?.initData);
-    console.log('initDataUnsafe:', tg?.initDataUnsafe);
-    console.log('user:', tg?.initDataUnsafe?.user);
+    if (tg) {
+      try {
+        tg.ready();
+      } catch {}
+
+      setTgDiag({
+        hasTg: true,
+        initData: tg.initData,
+        user: tg.initDataUnsafe?.user,
+      });
+    } else {
+      setTgDiag({ hasTg: false });
+    }
   }, []);
 
   /* ---------- LOAD MENU ---------- */
@@ -82,7 +99,12 @@ function App() {
     if (cart.length === 0) return;
 
     setOrderLoading(true);
-    const result = await saveOrder(cart, data);
+
+    // 🔥 ВОТ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ
+    const telegramUserId = tgDiag.user?.id ?? null;
+
+    const result = await saveOrder(cart, data, telegramUserId);
+
     setOrderLoading(false);
 
     if (result.success && result.orderId) {
@@ -138,6 +160,7 @@ function App() {
     return (
       <OrderConfirmation
         orderId={orderId}
+        telegramUserId={tgDiag.user?.id}
         onNewOrder={handleNewOrder}
       />
     );
@@ -146,6 +169,21 @@ function App() {
   /* ---------- MENU PAGE ---------- */
   return (
     <div className="min-h-screen bg-slate-50 relative">
+      {/* Диагностика */}
+      <div className="max-w-7xl mx-auto px-4 pt-4">
+        <div className="rounded-lg border bg-white p-3 text-sm">
+          <div className="font-semibold">
+            Telegram status:{' '}
+            {tgDiag.hasTg ? '✅ WebApp API detected' : '❌ No Telegram WebApp'}
+          </div>
+          {tgDiag.user && (
+            <div className="text-slate-600 mt-1">
+              user.id = <b>{tgDiag.user.id}</b>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 py-6 mb-6">
         <h1 className="text-4xl font-extrabold text-slate-900">
           Система заказов

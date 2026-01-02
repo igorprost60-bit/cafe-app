@@ -26,7 +26,6 @@ export interface Product {
   image_url?: string | null;
 }
 
-
 export interface CartItem {
   product: Product;
   quantity: number;
@@ -62,7 +61,8 @@ export async function fetchMenu(): Promise<{
 
 export async function saveOrder(
   items: CartItem[],
-  data: CheckoutData
+  data: CheckoutData,
+  telegramUserId: number | null
 ): Promise<{
   success: boolean;
   orderId?: string;
@@ -85,6 +85,9 @@ export async function saveOrder(
           customer_phone: data.phone,
           customer_address: data.address,
           customer_notes: data.notes || null,
+
+          // ⭐ ВАЖНО: привязка к Telegram пользователю
+          telegram_user_id: telegramUserId,
         },
       ])
       .select()
