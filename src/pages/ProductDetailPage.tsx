@@ -1,17 +1,25 @@
-import { Product } from '../lib/db';
-import { ShoppingCart, ChevronLeft } from 'lucide-react';
+import { Product, CartItem } from '../lib/db';
+import { ChevronLeft } from 'lucide-react';
+import { CartControl } from '../components/CartControl';
 
 interface ProductDetailPageProps {
   product: Product;
+  cart: CartItem[];
   onBack: () => void;
   onAddToCart: (product: Product) => void;
+  onUpdateQuantity: (productId: string, quantity: number) => void;
 }
 
 export function ProductDetailPage({
   product,
+  cart,
   onBack,
   onAddToCart,
+  onUpdateQuantity,
 }: ProductDetailPageProps) {
+  const quantity =
+    cart.find((item) => item.product.id === product.id)?.quantity ?? 0;
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* HEADER */}
@@ -67,15 +75,16 @@ export function ProductDetailPage({
                 )}
               </div>
 
-              {/* ADD TO CART BUTTON */}
-              <button
-                onClick={() => onAddToCart(product)}
-                className="w-full bg-slate-900 text-white font-semibold py-4 rounded-xl
-                hover:bg-slate-800 active:scale-95 transition flex items-center justify-center gap-2"
-              >
-                <ShoppingCart className="w-5 h-5" />
-                Добавить в корзину
-              </button>
+              {/* CART CONTROL */}
+              <div className="mt-6 flex justify-start">
+                <CartControl
+                  product={product}
+                  quantity={quantity}
+                  onAddToCart={onAddToCart}
+                  onUpdateQuantity={onUpdateQuantity}
+                  size="md"
+                />
+              </div>
             </div>
           </div>
         </div>
