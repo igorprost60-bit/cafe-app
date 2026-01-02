@@ -29,12 +29,13 @@ function App() {
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderId, setOrderId] = useState<string>('');
 
-  /* ---------- TELEGRAM DIAGNOSTICS ---------- */
+  // ✅ ДИАГНОСТИКА TELEGRAM (видно на экране)
   const [tgDiag, setTgDiag] = useState<TgDiag>({ hasTg: false });
 
   useEffect(() => {
     const tg = (window as any)?.Telegram?.WebApp;
 
+    // tg есть — значит SDK подхватился и мы внутри Telegram WebApp-контекста
     if (tg) {
       try {
         tg.ready();
@@ -98,12 +99,7 @@ function App() {
     if (cart.length === 0) return;
 
     setOrderLoading(true);
-
-    // 🔥 ВОТ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ
-    const telegramUserId = tgDiag.user?.id ?? null;
-
-    const result = await saveOrder(cart, data, telegramUserId);
-
+    const result = await saveOrder(cart, data);
     setOrderLoading(false);
 
     if (result.success && result.orderId) {
@@ -167,16 +163,29 @@ function App() {
   /* ---------- MENU PAGE ---------- */
   return (
     <div className="min-h-screen bg-slate-50 relative">
-      {/* Диагностика */}
+      {/* ✅ ВИДИМАЯ ДИАГНОСТИКА TELEGRAM */}
       <div className="max-w-7xl mx-auto px-4 pt-4">
         <div className="rounded-lg border bg-white p-3 text-sm">
           <div className="font-semibold">
             Telegram status:{' '}
             {tgDiag.hasTg ? '✅ WebApp API detected' : '❌ No Telegram WebApp'}
           </div>
-          {tgDiag.user && (
-            <div className="text-slate-600 mt-1">
-              user.id = <b>{tgDiag.user.id}</b>
+
+          {tgDiag.hasTg && (
+            <div className="mt-2 space-y-1 text-slate-600">
+              <div>
+                <b>initData:</b>{' '}
+                {tgDiag.initData ? '✅ есть (не пусто)' : '⚠️ пусто'}
+              </div>
+              <div>
+                <b>user:</b>{' '}
+                {tgDiag.user
+                  ? `✅ id=${tgDiag.user.id}, name=${tgDiag.user.first_name}`
+                  : '⚠️ user отсутствует'}
+              </div>
+              <div className="text-xs text-slate-400">
+                (Если user отсутствует — ты открыл не Web App-кнопкой, а как обычную ссылку)
+              </div>
             </div>
           )}
         </div>
