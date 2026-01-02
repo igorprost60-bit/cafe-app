@@ -173,8 +173,10 @@ function App() {
     return (
       <ProductDetailPage
         product={selectedProduct}
+        cart={cart}
         onBack={handleBackFromProduct}
         onAddToCart={handleAddToCart}
+        onUpdateQuantity={handleUpdateQuantity}
       />
     );
   }
