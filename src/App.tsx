@@ -8,7 +8,6 @@ import {
 } from './lib/db';
 import { Menu } from './components/Menu';
 import { OrderConfirmation } from './components/OrderConfirmation';
-import { notifyUserOrderAccepted } from './lib/telegramNotify';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage, CheckoutData } from './pages/CheckoutPage';
 import { ShoppingCart } from 'lucide-react';
@@ -160,7 +159,6 @@ function App() {
     return (
       <OrderConfirmation
         orderId={orderId}
-        telegramUserId={tgDiag.user?.id}
         onNewOrder={handleNewOrder}
       />
     );

@@ -1,56 +1,43 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
-import { notifyUserOrderAccepted } from '../lib/telegramNotify';
 
 interface OrderConfirmationProps {
   orderId: string;
-  telegramUserId?: number | null;
   onNewOrder: () => void;
 }
 
 export function OrderConfirmation({
   orderId,
-  telegramUserId,
   onNewOrder,
 }: OrderConfirmationProps) {
-  // 🧠 защита от повторного вызова
-  const notifiedRef = useRef(false);
 
   useEffect(() => {
     const tg = (window as any)?.Telegram?.WebApp;
+    if (!tg) return;
 
-    if (tg) {
-      try {
-        tg.ready();
-        tg.HapticFeedback?.notificationOccurred('success');
+    // ✅ Сообщаем Telegram, что экран готов
+    tg.ready();
 
-        tg.MainButton.setText('Новый заказ');
-        tg.MainButton.show();
+    // ✅ Лёгкая вибрация "успех"
+    tg.HapticFeedback?.notificationOccurred('success');
 
-        const handleClick = () => {
-          tg.MainButton.hide();
-          onNewOrder();
-        };
+    // ✅ Показываем нативную кнопку Telegram
+    tg.MainButton.setText('Новый заказ');
+    tg.MainButton.show();
 
-        tg.MainButton.onClick(handleClick);
+    const handleClick = () => {
+      tg.MainButton.hide();
+      onNewOrder();
+    };
 
-        return () => {
-          tg.MainButton.offClick(handleClick);
-          tg.MainButton.hide();
-        };
-      } catch {}
-    }
+    tg.MainButton.onClick(handleClick);
+
+    // 🧹 Чистим за собой
+    return () => {
+      tg.MainButton.offClick(handleClick);
+      tg.MainButton.hide();
+    };
   }, [onNewOrder]);
-
-  // 🔔 УВЕДОМЛЕНИЕ О ЗАКАЗЕ (ОДИН РАЗ)
-  useEffect(() => {
-    if (!telegramUserId) return;
-    if (notifiedRef.current) return;
-
-    notifiedRef.current = true;
-
-    notifyUserOrderAccepted(telegramUserId, orderId);
-  }, [telegramUserId, orderId]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
@@ -69,7 +56,7 @@ export function OrderConfirmation({
           Номер заказа: {orderId}
         </p>
 
-        {/* fallback кнопка */}
+        {/* fallback кнопка — работает и вне Telegram */}
         <button
           onClick={onNewOrder}
           className="w-full bg-blue-500 text-white font-bold py-3 rounded-lg hover:bg-blue-600 transition"
