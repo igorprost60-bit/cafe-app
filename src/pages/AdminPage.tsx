@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Category,
   Product,
@@ -14,7 +13,6 @@ import { Plus, ArrowLeft, Upload, ToggleRight } from 'lucide-react';
 type View = 'list' | 'add-category' | 'add-product' | 'category-products';
 
 export function AdminPage() {
-  const navigate = useNavigate();
   const [view, setView] = useState<View>('list');
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -47,12 +45,15 @@ if (view === 'list') {
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => navigate('/')}
-            className="p-2 rounded hover:bg-slate-200 transition"
-            aria-label="Назад"
-          >
-            <ArrowLeft className="w-5 h-5 text-slate-700" />
-          </button>
+  onClick={() => {
+    setView('list');
+    setSelectedCategory(null);
+  }}
+  className="p-2 rounded hover:bg-slate-200 transition"
+>
+  <ArrowLeft className="w-5 h-5 text-slate-700" />
+</button>
+
 
           <h1 className="text-3xl font-bold text-slate-900">
             Админка
