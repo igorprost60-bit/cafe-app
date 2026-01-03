@@ -14,6 +14,7 @@ import { Plus, ArrowLeft, Upload, ToggleRight } from 'lucide-react';
 type View = 'list' | 'add-category' | 'add-product' | 'category-products';
 
 export function AdminPage() {
+  const navigate = useNavigate();
   const [view, setView] = useState<View>('list');
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
