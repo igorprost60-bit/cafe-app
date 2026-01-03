@@ -12,7 +12,7 @@ import { Plus, ArrowLeft, Upload, ToggleRight } from 'lucide-react';
 
 type View = 'list' | 'add-category' | 'add-product' | 'category-products';
 
-export function AdminPage() {
+export function AdminPage({ onExit }: { onExit: () => void }) {
   const [view, setView] = useState<View>('list');
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -37,8 +37,16 @@ export function AdminPage() {
       <div className="min-h-screen bg-slate-50">
         {/* HEADER */}
         <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
-          <div className="max-w-2xl mx-auto px-4 py-4">
-            <h1 className="text-2xl font-bold text-slate-900">
+          <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
+            <button
+              onClick={onExit}
+              className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              В меню
+            </button>
+
+            <h1 className="text-xl font-bold text-slate-900">
               Админка
             </h1>
           </div>
@@ -177,6 +185,7 @@ export function AdminPage() {
 
   return null;
 }
+
 
 /* ---------- COMPONENTS ---------- */
 
