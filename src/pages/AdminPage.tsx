@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Category,
   Product,
@@ -14,14 +13,12 @@ import { Plus, ArrowLeft, Upload, ToggleRight } from 'lucide-react';
 type View = 'list' | 'add-category' | 'add-product' | 'category-products';
 
 export function AdminPage() {
-  const navigate = useNavigate();
-
   const [view, setView] = useState<View>('list');
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
-
+  
   useEffect(() => {
     loadData();
   }, []);
@@ -34,7 +31,7 @@ export function AdminPage() {
     setLoading(false);
   };
 
-  const backToList = () => {
+  const handleBack = () => {
     setView('list');
     setSelectedCategory(null);
   };
@@ -44,18 +41,7 @@ export function AdminPage() {
     return (
       <div className="min-h-screen bg-slate-50 p-4">
         <div className="max-w-2xl mx-auto">
-
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <button
-              onClick={() => navigate('/')}
-              className="p-2 rounded hover:bg-slate-200 transition"
-              aria-label="Назад в меню"
-            >
-              <ArrowLeft className="w-5 h-5 text-slate-700" />
-            </button>
-            <h1 className="text-3xl font-bold text-slate-900">Админка</h1>
-          </div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-6">Админка</h1>
 
           {loading ? (
             <p className="text-slate-500">Загрузка...</p>
@@ -103,10 +89,10 @@ export function AdminPage() {
   if (view === 'add-category') {
     return (
       <AddCategoryForm
-        onBack={backToList}
+        onBack={handleBack}
         onSuccess={() => {
           loadData();
-          backToList();
+          handleBack();
         }}
       />
     );
@@ -121,20 +107,17 @@ export function AdminPage() {
     return (
       <div className="min-h-screen bg-slate-50 p-4">
         <div className="max-w-2xl mx-auto">
+          <button
+            onClick={handleBack}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition mb-6"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Назад
+          </button>
 
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <button
-              onClick={backToList}
-              className="p-2 rounded hover:bg-slate-200 transition"
-              aria-label="Назад"
-            >
-              <ArrowLeft className="w-5 h-5 text-slate-700" />
-            </button>
-            <h1 className="text-3xl font-bold text-slate-900">
-              {selectedCategory.name}
-            </h1>
-          </div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-6">
+            {selectedCategory.name}
+          </h1>
 
           <button
             onClick={() => setView('add-product')}
@@ -154,7 +137,9 @@ export function AdminPage() {
                   key={product.id}
                   product={product}
                   onToggle={(isActive) => {
-                    adminToggleProductActivity(product.id, isActive).then(loadData);
+                    adminToggleProductActivity(product.id, isActive).then(() => {
+                      loadData();
+                    });
                   }}
                 />
               ))
@@ -183,7 +168,7 @@ export function AdminPage() {
   return null;
 }
 
-/* ---------- ADD CATEGORY FORM ---------- */
+/* ---------- COMPONENTS ---------- */
 
 function AddCategoryForm({
   onBack,
@@ -214,45 +199,46 @@ function AddCategoryForm({
   return (
     <div className="min-h-screen bg-slate-50 p-4">
       <div className="max-w-2xl mx-auto">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition mb-6"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Назад
+        </button>
 
-        <div className="flex items-center gap-3 mb-6">
-          <button
-            onClick={onBack}
-            className="p-2 rounded hover:bg-slate-200 transition"
-          >
-            <ArrowLeft className="w-5 h-5 text-slate-700" />
-          </button>
-          <h1 className="text-3xl font-bold text-slate-900">
-            Добавить категорию
-          </h1>
-        </div>
+        <h1 className="text-3xl font-bold text-slate-900 mb-6">Добавить категорию</h1>
 
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow">
-          <label className="block text-sm font-semibold mb-2">
-            Название категории
-          </label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg mb-4"
-          />
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-slate-900 mb-2">
+              Название категории
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Например: Напитки"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+              disabled={loading}
+            />
+          </div>
 
           {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-slate-900 text-white py-2 rounded-lg"
+            className="w-full bg-slate-900 text-white font-semibold py-2 rounded-lg
+            hover:bg-slate-800 disabled:opacity-50 transition"
           >
-            {loading ? 'Сохранение…' : 'Сохранить'}
+            {loading ? 'Сохранение...' : 'Сохранить'}
           </button>
         </form>
       </div>
     </div>
   );
 }
-
-/* ---------- ADD PRODUCT FORM ---------- */
 
 function AddProductForm({
   categoryId,
@@ -278,30 +264,32 @@ function AddProductForm({
     const file = e.target.files?.[0];
     if (file) {
       setImage(file);
-      setImagePreview(URL.createObjectURL(file));
+      const preview = URL.createObjectURL(file);
+      setImagePreview(preview);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
 
     let imageUrl: string | null = null;
 
     if (image) {
-      const upload = await adminUploadImage(image);
-      if (!upload.success) {
-        setError(upload.error || 'Ошибка загрузки');
+      const uploadResult = await adminUploadImage(image);
+      if (!uploadResult.success) {
+        setError(uploadResult.error || 'Ошибка при загрузке изображения');
         setLoading(false);
         return;
       }
-      imageUrl = upload.url || null;
+      imageUrl = uploadResult.url || null;
     }
 
     const result = await adminCreateProduct(
       categoryId,
       name,
-      Math.round(parseFloat(price) * 100),
+      parseFloat(price) * 100,
       description || null,
       imageUrl,
       isActive
@@ -310,7 +298,7 @@ function AddProductForm({
     if (result.success) {
       onSuccess();
     } else {
-      setError(result.error || 'Ошибка создания товара');
+      setError(result.error || 'Ошибка при создании товара');
       setLoading(false);
     }
   };
@@ -318,75 +306,132 @@ function AddProductForm({
   return (
     <div className="min-h-screen bg-slate-50 p-4">
       <div className="max-w-2xl mx-auto">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition mb-6"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Назад
+        </button>
 
-        <div className="flex items-center gap-3 mb-6">
-          <button
-            onClick={onBack}
-            className="p-2 rounded hover:bg-slate-200 transition"
-          >
-            <ArrowLeft className="w-5 h-5 text-slate-700" />
-          </button>
-          <h1 className="text-3xl font-bold text-slate-900">
-            Добавить товар
-          </h1>
-        </div>
-
-        <p className="text-slate-600 mb-4">{categoryName}</p>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Добавить товар</h1>
+        <p className="text-slate-600 mb-6">{categoryName}</p>
 
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow space-y-4">
-          <input
-            placeholder="Название"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg"
-          />
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">
+              Название товара
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Например: Кофе"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+              disabled={loading}
+              required
+            />
+          </div>
 
-          <textarea
-            placeholder="Описание"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg"
-          />
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">
+              Описание (опционально)
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Описание товара"
+              rows={3}
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+              disabled={loading}
+            />
+          </div>
 
-          <input
-            type="number"
-            placeholder="Цена"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg"
-          />
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">
+              Цена ($)
+            </label>
+            <input
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="0.00"
+              step="0.01"
+              min="0"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+              disabled={loading}
+              required
+            />
+          </div>
 
-          <input type="file" accept="image/*" onChange={handleImageChange} />
+          <div>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">
+              Изображение (опционально)
+            </label>
+            <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+                id="image-input"
+                disabled={loading}
+              />
+              <label
+                htmlFor="image-input"
+                className="cursor-pointer flex flex-col items-center gap-2"
+              >
+                {imagePreview ? (
+                  <>
+                    <img
+                      src={imagePreview}
+                      alt="preview"
+                      className="w-24 h-24 object-cover rounded"
+                    />
+                    <span className="text-xs text-slate-600">Кликните для изменения</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-6 h-6 text-slate-400" />
+                    <span className="text-sm text-slate-600">Кликните для загрузки</span>
+                  </>
+                )}
+              </label>
+            </div>
+          </div>
 
-          {imagePreview && (
-            <img src={imagePreview} className="w-24 h-24 object-cover rounded" />
-          )}
-
-          <button
-            type="button"
-            onClick={() => setIsActive(!isActive)}
-            className="flex items-center gap-2"
-          >
-            <ToggleRight />
-            {isActive ? 'Активен' : 'Неактивен'}
-          </button>
+          <div className="flex items-center gap-3 p-3 bg-slate-100 rounded-lg">
+            <button
+              type="button"
+              onClick={() => setIsActive(!isActive)}
+              className={`p-2 rounded transition ${
+                isActive
+                  ? 'bg-green-500 text-white'
+                  : 'bg-slate-300 text-slate-600'
+              }`}
+            >
+              <ToggleRight className="w-4 h-4" />
+            </button>
+            <span className="text-sm font-semibold text-slate-900">
+              {isActive ? 'Активен' : 'Неактивен'}
+            </span>
+          </div>
 
           {error && <p className="text-red-600 text-sm">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-slate-900 text-white py-2 rounded-lg"
+            className="w-full bg-slate-900 text-white font-semibold py-2 rounded-lg
+            hover:bg-slate-800 disabled:opacity-50 transition"
           >
-            {loading ? 'Сохранение…' : 'Сохранить'}
+            {loading ? 'Сохранение...' : 'Сохранить'}
           </button>
         </form>
       </div>
     </div>
   );
 }
-
-/* ---------- PRODUCT CARD ---------- */
 
 function ProductCard({
   product,
@@ -398,12 +443,45 @@ function ProductCard({
   const isActive = product.is_active !== false;
 
   return (
-    <div className={`p-4 border rounded-lg ${!isActive && 'opacity-60'}`}>
-      <h3 className="font-semibold">{product.name}</h3>
-      <p>${(product.price / 100).toFixed(2)}</p>
-      <button onClick={() => onToggle(!isActive)}>
-        {isActive ? 'Отключить' : 'Включить'}
-      </button>
+    <div
+      className={`p-4 rounded-lg border transition ${
+        isActive
+          ? 'bg-white border-slate-200'
+          : 'bg-slate-100 border-slate-300 opacity-60'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          {product.image_url && (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="w-16 h-16 object-cover rounded mb-2"
+            />
+          )}
+          <h3 className="font-semibold text-slate-900">{product.name}</h3>
+          {product.description && (
+            <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+              {product.description}
+            </p>
+          )}
+          <p className="text-sm font-semibold text-slate-900 mt-2">
+            ${(product.price / 100).toFixed(2)}
+          </p>
+        </div>
+
+        <button
+          onClick={() => onToggle(!isActive)}
+          className={`p-2 rounded transition ${
+            isActive
+              ? 'bg-green-500 text-white hover:bg-green-600'
+              : 'bg-slate-300 text-slate-600 hover:bg-slate-400'
+          }`}
+          title={isActive ? 'Деактивировать' : 'Активировать'}
+        >
+          <ToggleRight className="w-5 h-5" />
+        </button>
+      </div>
     </div>
   );
 }
