@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Category,
   Product,
@@ -36,54 +37,71 @@ export function AdminPage() {
     setSelectedCategory(null);
   };
 
-  /* ---------- LIST VIEW ---------- */
-  if (view === 'list') {
-    return (
-      <div className="min-h-screen bg-slate-50 p-4">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold text-slate-900 mb-6">Админка</h1>
+ /* ---------- LIST VIEW ---------- */
+if (view === 'list') {
+  return (
+    <div className="min-h-screen bg-slate-50 p-4">
+      <div className="max-w-2xl mx-auto">
 
-          {loading ? (
-            <p className="text-slate-500">Загрузка...</p>
-          ) : (
-            <div className="space-y-4">
-              <button
-                onClick={() => setView('add-category')}
-                className="w-full bg-slate-900 text-white font-semibold py-3 rounded-lg
-                hover:bg-slate-800 active:scale-95 transition flex items-center justify-center gap-2"
-              >
-                <Plus className="w-5 h-5" />
-                Добавить категорию
-              </button>
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => navigate('/')}
+            className="p-2 rounded hover:bg-slate-200 transition"
+            aria-label="Назад"
+          >
+            <ArrowLeft className="w-5 h-5 text-slate-700" />
+          </button>
 
-              <div className="grid gap-3">
-                {categories.length === 0 ? (
-                  <p className="text-slate-500">Категорий нет</p>
-                ) : (
-                  categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => {
-                        setSelectedCategory(cat);
-                        setView('category-products');
-                      }}
-                      className="p-4 bg-white border border-slate-200 rounded-lg text-left
-                      hover:border-slate-400 hover:shadow transition"
-                    >
-                      <h3 className="font-semibold text-slate-900">{cat.name}</h3>
-                      <p className="text-sm text-slate-500 mt-1">
-                        {products.filter((p) => p.category_id === cat.id).length} товаров
-                      </p>
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
+          <h1 className="text-3xl font-bold text-slate-900">
+            Админка
+          </h1>
         </div>
+
+        {loading ? (
+          <p className="text-slate-500">Загрузка...</p>
+        ) : (
+          <div className="space-y-4">
+            <button
+              onClick={() => setView('add-category')}
+              className="w-full bg-slate-900 text-white font-semibold py-3 rounded-lg
+              hover:bg-slate-800 active:scale-95 transition flex items-center justify-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Добавить категорию
+            </button>
+
+            <div className="grid gap-3">
+              {categories.length === 0 ? (
+                <p className="text-slate-500">Категорий нет</p>
+              ) : (
+                categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setSelectedCategory(cat);
+                      setView('category-products');
+                    }}
+                    className="p-4 bg-white border border-slate-200 rounded-lg text-left
+                    hover:border-slate-400 hover:shadow transition"
+                  >
+                    <h3 className="font-semibold text-slate-900">
+                      {cat.name}
+                    </h3>
+                    <p className="text-sm text-slate-500 mt-1">
+                      {products.filter((p) => p.category_id === cat.id).length} товаров
+                    </p>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
-    );
-  }
+    </div>
+  );
+}
+
 
   /* ---------- ADD CATEGORY VIEW ---------- */
   if (view === 'add-category') {
