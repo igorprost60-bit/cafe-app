@@ -8,12 +8,12 @@ import {
 } from './lib/db';
 import { Menu } from './components/Menu';
 import { OrderConfirmation } from './components/OrderConfirmation';
-import { notifyUserOrderAccepted } from './lib/telegramNotify';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage, CheckoutData } from './pages/CheckoutPage';
+import { ProductDetailPage } from './pages/ProductDetailPage';
 import { ShoppingCart } from 'lucide-react';
 
-type PageType = 'menu' | 'cart' | 'checkout' | 'confirmation';
+type PageType = 'menu' | 'cart' | 'checkout' | 'confirmation' | 'product-detail';
 
 type TgDiag = {
   hasTg: boolean;
@@ -29,10 +29,11 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderId, setOrderId] = useState<string>('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  /* ---------- TELEGRAM DIAGNOSTICS ---------- */
   const [tgDiag, setTgDiag] = useState<TgDiag>({ hasTg: false });
 
+  /* ---------- TELEGRAM DIAGNOSTICS ---------- */
   useEffect(() => {
     const tg = (window as any)?.Telegram?.WebApp;
 
@@ -46,8 +47,6 @@ function App() {
         initData: tg.initData,
         user: tg.initDataUnsafe?.user,
       });
-    } else {
-      setTgDiag({ hasTg: false });
     }
   }, []);
 
@@ -99,12 +98,9 @@ function App() {
     if (cart.length === 0) return;
 
     setOrderLoading(true);
-
-    // 🔥 ВОТ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ
     const telegramUserId = tgDiag.user?.id ?? null;
 
     const result = await saveOrder(cart, data, telegramUserId);
-
     setOrderLoading(false);
 
     if (result.success && result.orderId) {
@@ -119,6 +115,17 @@ function App() {
   const handleNewOrder = () => {
     setPage('menu');
     setCart([]);
+    setSelectedProduct(null);
+  };
+
+  const handleSelectProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setPage('product-detail');
+  };
+
+  const handleBackFromProduct = () => {
+    setSelectedProduct(null);
+    setPage('menu');
   };
 
   /* ---------- LOADING ---------- */
@@ -155,6 +162,35 @@ function App() {
     );
   }
 
+  /* ---------- PRODUCT DETAIL ---------- */
+  if (page === 'product-detail' && selectedProduct) {
+    return (
+      <div className="min-h-screen bg-slate-50 relative">
+        <ProductDetailPage
+          product={selectedProduct}
+          cart={cart}
+          onBack={handleBackFromProduct}
+          onAddToCart={handleAddToCart}
+          onUpdateQuantity={handleUpdateQuantity}
+        />
+
+        {cart.length > 0 && (
+          <div
+            onClick={() => setPage('cart')}
+            className="fixed right-4 top-1/2 -translate-y-1/2 z-50 cursor-pointer"
+          >
+            <div className="relative bg-purple-600 text-white rounded-full shadow-xl p-4 hover:scale-105 transition">
+              <ShoppingCart className="w-6 h-6" />
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                {cart.length}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   /* ---------- CONFIRMATION ---------- */
   if (page === 'confirmation') {
     return (
@@ -169,21 +205,6 @@ function App() {
   /* ---------- MENU PAGE ---------- */
   return (
     <div className="min-h-screen bg-slate-50 relative">
-      {/* Диагностика */}
-      <div className="max-w-7xl mx-auto px-4 pt-4">
-        <div className="rounded-lg border bg-white p-3 text-sm">
-          <div className="font-semibold">
-            Telegram status:{' '}
-            {tgDiag.hasTg ? '✅ WebApp API detected' : '❌ No Telegram WebApp'}
-          </div>
-          {tgDiag.user && (
-            <div className="text-slate-600 mt-1">
-              user.id = <b>{tgDiag.user.id}</b>
-            </div>
-          )}
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 py-6 mb-6">
         <h1 className="text-4xl font-extrabold text-slate-900">
           Система заказов
@@ -197,6 +218,7 @@ function App() {
           cart={cart}
           onAddToCart={handleAddToCart}
           onUpdateQuantity={handleUpdateQuantity}
+          onSelectProduct={handleSelectProduct}
         />
       </div>
 
