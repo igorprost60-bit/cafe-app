@@ -193,9 +193,14 @@ function App() {
   }
 
   /* ---------- ADMIN PAGE ---------- */
-  if (page === 'admin') {
-    return <AdminPage />;
-  }
+if (page === 'admin') {
+  return (
+    <AdminPage
+      onExit={() => setPage('menu')}
+    />
+  );
+}
+
 
   /* ---------- CONFIRMATION ---------- */
   if (page === 'confirmation') {
