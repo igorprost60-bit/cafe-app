@@ -18,7 +18,7 @@ export function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     loadData();
   }, []);
@@ -31,146 +31,136 @@ export function AdminPage() {
     setLoading(false);
   };
 
-  const handleBack = () => {
-    setView('list');
-    setSelectedCategory(null);
-  };
-
- /* ---------- LIST VIEW ---------- */
-if (view === 'list') {
-  return (
-    <div className="min-h-screen bg-slate-50 p-4">
-      <div className="max-w-2xl mx-auto">
-
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <button
-  onClick={() => {
-    setView('list');
-    setSelectedCategory(null);
-  }}
-  className="p-2 rounded hover:bg-slate-200 transition"
->
-  <ArrowLeft className="w-5 h-5 text-slate-700" />
-</button>
-
-
-          <h1 className="text-3xl font-bold text-slate-900">
-            Админка
-          </h1>
+  /* ---------- LIST VIEW ---------- */
+  if (view === 'list') {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        {/* HEADER */}
+        <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
+          <div className="max-w-2xl mx-auto px-4 py-4">
+            <h1 className="text-2xl font-bold text-slate-900">
+              Админка
+            </h1>
+          </div>
         </div>
 
-        {loading ? (
-          <p className="text-slate-500">Загрузка...</p>
-        ) : (
-          <div className="space-y-4">
-            <button
-              onClick={() => setView('add-category')}
-              className="w-full bg-slate-900 text-white font-semibold py-3 rounded-lg
-              hover:bg-slate-800 active:scale-95 transition flex items-center justify-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Добавить категорию
-            </button>
+        {/* CONTENT */}
+        <div className="max-w-2xl mx-auto p-4 space-y-4">
+          {loading ? (
+            <p className="text-slate-500">Загрузка...</p>
+          ) : (
+            <>
+              <button
+                onClick={() => setView('add-category')}
+                className="w-full bg-slate-900 text-white font-semibold py-3 rounded-lg
+                hover:bg-slate-800 active:scale-95 transition flex items-center justify-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                Добавить категорию
+              </button>
 
-            <div className="grid gap-3">
-              {categories.length === 0 ? (
-                <p className="text-slate-500">Категорий нет</p>
-              ) : (
-                categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => {
-                      setSelectedCategory(cat);
-                      setView('category-products');
-                    }}
-                    className="p-4 bg-white border border-slate-200 rounded-lg text-left
-                    hover:border-slate-400 hover:shadow transition"
-                  >
-                    <h3 className="font-semibold text-slate-900">
-                      {cat.name}
-                    </h3>
-                    <p className="text-sm text-slate-500 mt-1">
-                      {products.filter((p) => p.category_id === cat.id).length} товаров
-                    </p>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        )}
+              <div className="grid gap-3">
+                {categories.length === 0 ? (
+                  <p className="text-slate-500">Категорий нет</p>
+                ) : (
+                  categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        setSelectedCategory(cat);
+                        setView('category-products');
+                      }}
+                      className="p-4 bg-white border border-slate-200 rounded-lg text-left
+                      hover:border-slate-400 hover:shadow transition"
+                    >
+                      <h3 className="font-semibold text-slate-900">
+                        {cat.name}
+                      </h3>
+                      <p className="text-sm text-slate-500 mt-1">
+                        {products.filter((p) => p.category_id === cat.id).length} товаров
+                      </p>
+                    </button>
+                  ))
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-
-  /* ---------- ADD CATEGORY VIEW ---------- */
+  /* ---------- ADD CATEGORY ---------- */
   if (view === 'add-category') {
     return (
       <AddCategoryForm
-        onBack={handleBack}
+        onBack={() => setView('list')}
         onSuccess={() => {
           loadData();
-          handleBack();
+          setView('list');
         }}
       />
     );
   }
 
-  /* ---------- CATEGORY PRODUCTS VIEW ---------- */
+  /* ---------- CATEGORY PRODUCTS ---------- */
   if (view === 'category-products' && selectedCategory) {
     const categoryProducts = products.filter(
       (p) => p.category_id === selectedCategory.id
     );
 
     return (
-      <div className="min-h-screen bg-slate-50 p-4">
-        <div className="max-w-2xl mx-auto">
-          <button
-            onClick={handleBack}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition mb-6"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Назад
-          </button>
+      <div className="min-h-screen bg-slate-50">
+        {/* HEADER */}
+        <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
+          <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
+            <button
+              onClick={() => {
+                setView('list');
+                setSelectedCategory(null);
+              }}
+              className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Назад
+            </button>
 
-          <h1 className="text-3xl font-bold text-slate-900 mb-6">
-            {selectedCategory.name}
-          </h1>
+            <h1 className="text-xl font-bold text-slate-900">
+              {selectedCategory.name}
+            </h1>
+          </div>
+        </div>
 
+        {/* CONTENT */}
+        <div className="max-w-2xl mx-auto p-4 space-y-4">
           <button
             onClick={() => setView('add-product')}
             className="w-full bg-slate-900 text-white font-semibold py-3 rounded-lg
-            hover:bg-slate-800 active:scale-95 transition flex items-center justify-center gap-2 mb-6"
+            hover:bg-slate-800 active:scale-95 transition flex items-center justify-center gap-2"
           >
             <Plus className="w-5 h-5" />
             Добавить товар
           </button>
 
-          <div className="grid gap-3">
-            {categoryProducts.length === 0 ? (
-              <p className="text-slate-500">Товаров нет</p>
-            ) : (
-              categoryProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onToggle={(isActive) => {
-                    adminToggleProductActivity(product.id, isActive).then(() => {
-                      loadData();
-                    });
-                  }}
-                />
-              ))
-            )}
-          </div>
+          {categoryProducts.length === 0 ? (
+            <p className="text-slate-500">Товаров нет</p>
+          ) : (
+            categoryProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onToggle={(isActive) => {
+                  adminToggleProductActivity(product.id, isActive).then(loadData);
+                }}
+              />
+            ))
+          )}
         </div>
       </div>
     );
   }
 
-  /* ---------- ADD PRODUCT VIEW ---------- */
+  /* ---------- ADD PRODUCT ---------- */
   if (view === 'add-product' && selectedCategory) {
     return (
       <AddProductForm
