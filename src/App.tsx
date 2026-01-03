@@ -11,9 +11,10 @@ import { OrderConfirmation } from './components/OrderConfirmation';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage, CheckoutData } from './pages/CheckoutPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
-import { ShoppingCart } from 'lucide-react';
+import { AdminPage } from './pages/AdminPage';
+import { ShoppingCart, Settings } from 'lucide-react';
 
-type PageType = 'menu' | 'cart' | 'checkout' | 'confirmation' | 'product-detail';
+type PageType = 'menu' | 'cart' | 'checkout' | 'confirmation' | 'product-detail' | 'admin';
 
 type TgDiag = {
   hasTg: boolean;
@@ -191,6 +192,11 @@ function App() {
     );
   }
 
+  /* ---------- ADMIN PAGE ---------- */
+  if (page === 'admin') {
+    return <AdminPage />;
+  }
+
   /* ---------- CONFIRMATION ---------- */
   if (page === 'confirmation') {
     return (
@@ -205,10 +211,19 @@ function App() {
   /* ---------- MENU PAGE ---------- */
   return (
     <div className="min-h-screen bg-slate-50 relative">
-      <div className="max-w-7xl mx-auto px-4 py-6 mb-6">
+      <div className="max-w-7xl mx-auto px-4 py-6 mb-6 flex items-center justify-between">
         <h1 className="text-4xl font-extrabold text-slate-900">
           Система заказов
         </h1>
+        <button
+          onClick={() => setPage('admin')}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg
+          hover:bg-slate-800 transition"
+          title="Админка"
+        >
+          <Settings className="w-5 h-5" />
+          <span className="text-sm font-semibold">Админка</span>
+        </button>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 pb-24">
