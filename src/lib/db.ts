@@ -24,6 +24,7 @@ export interface Product {
   price: number;
   description?: string | null;
   image_url?: string | null;
+  is_active?: boolean;
 }
 
 export interface CartItem {
@@ -118,6 +119,169 @@ export async function saveOrder(
       success: true,
       orderId: orderData.id,
     };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Unknown error',
+    };
+  }
+}
+
+/* ---------- ADMIN FUNCTIONS ---------- */
+
+export async function adminFetchAll(): Promise<{
+  categories: Category[];
+  products: Product[];
+}> {
+  try {
+    const [categoriesResult, productsResult] = await Promise.all([
+      supabase.from('categories').select('*').order('name'),
+      supabase.from('products').select('*').order('name'),
+    ]);
+
+    if (categoriesResult.error || productsResult.error) {
+      throw new Error('Failed to fetch data');
+    }
+
+    return {
+      categories: categoriesResult.data || [],
+      products: productsResult.data || [],
+    };
+  } catch (err) {
+    console.error('Error fetching admin data:', err);
+    return { categories: [], products: [] };
+  }
+}
+
+export async function adminCreateCategory(name: string): Promise<{
+  success: boolean;
+  id?: string;
+  error?: string;
+}> {
+  try {
+    if (!name.trim()) {
+      return { success: false, error: 'Category name is required' };
+    }
+
+    const { data, error } = await supabase
+      .from('categories')
+      .insert([{ name: name.trim() }])
+      .select()
+      .single();
+
+    if (error || !data) {
+      throw new Error(error?.message || 'Failed to create category');
+    }
+
+    return { success: true, id: data.id };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Unknown error',
+    };
+  }
+}
+
+export async function adminCreateProduct(
+  categoryId: string,
+  name: string,
+  price: number,
+  description: string | null,
+  imageUrl: string | null,
+  isActive: boolean = true
+): Promise<{
+  success: boolean;
+  id?: string;
+  error?: string;
+}> {
+  try {
+    if (!name.trim()) {
+      return { success: false, error: 'Product name is required' };
+    }
+
+    if (price < 0) {
+      return { success: false, error: 'Price must be non-negative' };
+    }
+
+    const { data, error } = await supabase
+      .from('products')
+      .insert([
+        {
+          category_id: categoryId,
+          name: name.trim(),
+          price: Math.round(price),
+          description: description?.trim() || null,
+          image_url: imageUrl || null,
+          is_active: isActive,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error || !data) {
+      throw new Error(error?.message || 'Failed to create product');
+    }
+
+    return { success: true, id: data.id };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Unknown error',
+    };
+  }
+}
+
+export async function adminToggleProductActivity(
+  productId: string,
+  isActive: boolean
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .update({ is_active: isActive })
+      .eq('id', productId);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Unknown error',
+    };
+  }
+}
+
+export async function adminUploadImage(
+  file: File
+): Promise<{
+  success: boolean;
+  url?: string;
+  error?: string;
+}> {
+  try {
+    const filename = `${Date.now()}-${file.name}`;
+    const { data, error } = await supabase.storage
+      .from('products')
+      .upload(filename, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (error || !data) {
+      throw new Error(error?.message || 'Failed to upload image');
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('products').getPublicUrl(data.path);
+
+    return { success: true, url: publicUrl };
   } catch (err) {
     return {
       success: false,
