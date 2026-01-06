@@ -2,16 +2,18 @@ import { useEffect, useState } from 'react';
 import {
   fetchMenu,
   saveOrder,
+  getAdminRole,
   Category,
   Product,
   CartItem,
+  AdminRole,
 } from './lib/db';
 import { Menu } from './components/Menu';
 import { OrderConfirmation } from './components/OrderConfirmation';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage, CheckoutData } from './pages/CheckoutPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
-import { AdminPage } from './pages/admin/AdminPage';
+import { AdminPage } from './pages/AdminPage';
 import { ShoppingCart, Settings } from 'lucide-react';
 
 type PageType = 'menu' | 'cart' | 'checkout' | 'confirmation' | 'product-detail' | 'admin';
@@ -33,21 +35,25 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const [tgDiag, setTgDiag] = useState<TgDiag>({ hasTg: false });
+  const [userRole, setUserRole] = useState<AdminRole | null>(null);
 
-  /* ---------- TELEGRAM DIAGNOSTICS ---------- */
+  /* ---------- TELEGRAM & ACCESS CHECK ---------- */
   useEffect(() => {
     const tg = (window as any)?.Telegram?.WebApp;
 
     if (tg) {
-      try {
-        tg.ready();
-      } catch {}
-
+      tg.ready();
+      const user = tg.initDataUnsafe?.user;
+      
       setTgDiag({
         hasTg: true,
         initData: tg.initData,
-        user: tg.initDataUnsafe?.user,
+        user: user,
       });
+
+      if (user?.id) {
+        getAdminRole(user.id).then(role => setUserRole(role));
+      }
     }
   }, []);
 
@@ -129,7 +135,7 @@ function App() {
     setPage('menu');
   };
 
-  /* ---------- LOADING ---------- */
+  /* ---------- PAGES RENDERING ---------- */
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -138,7 +144,6 @@ function App() {
     );
   }
 
-  /* ---------- CART PAGE ---------- */
   if (page === 'cart') {
     return (
       <CartPage
@@ -151,7 +156,6 @@ function App() {
     );
   }
 
-  /* ---------- CHECKOUT PAGE ---------- */
   if (page === 'checkout') {
     return (
       <CheckoutPage
@@ -163,7 +167,6 @@ function App() {
     );
   }
 
-  /* ---------- PRODUCT DETAIL ---------- */
   if (page === 'product-detail' && selectedProduct) {
     return (
       <div className="min-h-screen bg-slate-50 relative">
@@ -174,35 +177,17 @@ function App() {
           onAddToCart={handleAddToCart}
           onUpdateQuantity={handleUpdateQuantity}
         />
-
         {cart.length > 0 && (
-          <div
-            onClick={() => setPage('cart')}
-            className="fixed right-4 top-1/2 -translate-y-1/2 z-50 cursor-pointer"
-          >
-            <div className="relative bg-purple-600 text-white rounded-full shadow-xl p-4 hover:scale-105 transition">
-              <ShoppingCart className="w-6 h-6" />
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                {cart.length}
-              </span>
-            </div>
-          </div>
+          <CartFloatingButton count={cart.length} onClick={() => setPage('cart')} />
         )}
       </div>
     );
   }
 
-  /* ---------- ADMIN PAGE ---------- */
-if (page === 'admin') {
-  return (
-    <AdminPage
-      onExit={() => setPage('menu')}
-    />
-  );
-}
+  if (page === 'admin') {
+    return <AdminPage userRole={userRole} onExit={() => setPage('menu')} />;
+  }
 
-
-  /* ---------- CONFIRMATION ---------- */
   if (page === 'confirmation') {
     return (
       <OrderConfirmation
@@ -217,18 +202,16 @@ if (page === 'admin') {
   return (
     <div className="min-h-screen bg-slate-50 relative">
       <div className="max-w-7xl mx-auto px-4 py-6 mb-6 flex items-center justify-between">
-        <h1 className="text-4xl font-extrabold text-slate-900">
-          Система заказов
-        </h1>
-        <button
-          onClick={() => setPage('admin')}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg
-          hover:bg-slate-800 transition"
-          title="Админка"
-        >
-          <Settings className="w-5 h-5" />
-          <span className="text-sm font-semibold">Админка</span>
-        </button>
+        <h1 className="text-4xl font-extrabold text-slate-900">Система заказов</h1>
+        {userRole && (
+          <button
+            onClick={() => setPage('admin')}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition"
+          >
+            <Settings className="w-5 h-5" />
+            <span className="text-sm font-semibold">Админка</span>
+          </button>
+        )}
       </div>
 
       <div className="max-w-7xl mx-auto px-4 pb-24">
@@ -243,18 +226,21 @@ if (page === 'admin') {
       </div>
 
       {cart.length > 0 && (
-        <div
-          onClick={() => setPage('cart')}
-          className="fixed right-4 top-1/2 -translate-y-1/2 z-50 cursor-pointer"
-        >
-          <div className="relative bg-purple-600 text-white rounded-full shadow-xl p-4 hover:scale-105 transition">
-            <ShoppingCart className="w-6 h-6" />
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-              {cart.length}
-            </span>
-          </div>
-        </div>
+        <CartFloatingButton count={cart.length} onClick={() => setPage('cart')} />
       )}
+    </div>
+  );
+}
+
+function CartFloatingButton({ count, onClick }: { count: number; onClick: () => void }) {
+  return (
+    <div onClick={onClick} className="fixed right-4 top-1/2 -translate-y-1/2 z-50 cursor-pointer">
+      <div className="relative bg-purple-600 text-white rounded-full shadow-xl p-4 hover:scale-105 transition">
+        <ShoppingCart className="w-6 h-6" />
+        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+          {count}
+        </span>
+      </div>
     </div>
   );
 }
