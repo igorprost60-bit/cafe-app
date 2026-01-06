@@ -12,6 +12,15 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 /* ---------- TYPES ---------- */
 
+export type AdminRole = 'superadmin' | 'owner' | 'admin';
+
+export interface AdminUser {
+  telegram_id: number;
+  name: string;
+  role: AdminRole;
+  created_at?: string;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -30,6 +39,56 @@ export interface Product {
 export interface CartItem {
   product: Product;
   quantity: number;
+}
+
+/* ---------- ROLE MANAGEMENT ---------- */
+
+/**
+ * Получить роль пользователя по его Telegram ID
+ */
+export async function getAdminRole(tgId: number): Promise<AdminRole | null> {
+  try {
+    const { data, error } = await supabase
+      .from('admins')
+      .select('role')
+      .eq('telegram_id', tgId)
+      .single();
+    
+    if (error || !data) return null;
+    return data.role as AdminRole;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Получить список всех администраторов (только для superadmin/owner)
+ */
+export async function fetchAllAdmins(): Promise<AdminUser[]> {
+  const { data } = await supabase
+    .from('admins')
+    .select('*')
+    .order('created_at', { ascending: false });
+  return data || [];
+}
+
+/**
+ * Добавить нового администратора/владельца
+ */
+export async function addAdminUser(tgId: number, name: string, role: AdminRole) {
+  return await supabase
+    .from('admins')
+    .insert([{ telegram_id: tgId, name, role }]);
+}
+
+/**
+ * Удалить пользователя из списка админов
+ */
+export async function removeAdminUser(tgId: number) {
+  return await supabase
+    .from('admins')
+    .delete()
+    .eq('telegram_id', tgId);
 }
 
 /* ---------- FETCH MENU ---------- */
@@ -75,7 +134,6 @@ export async function saveOrder(
       0
     );
 
-    /* 1️⃣ создаём заказ */
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .insert([
@@ -86,8 +144,6 @@ export async function saveOrder(
           customer_phone: data.phone,
           customer_address: data.address,
           customer_notes: data.notes || null,
-
-          // ⭐ ВАЖНО: привязка к Telegram пользователю
           telegram_user_id: telegramUserId,
         },
       ])
@@ -98,7 +154,6 @@ export async function saveOrder(
       throw new Error(orderError?.message || 'Failed to create order');
     }
 
-    /* 2️⃣ создаём позиции заказа */
     const orderItems = items.map((item) => ({
       order_id: orderData.id,
       product_id: item.product.id,
@@ -114,7 +169,6 @@ export async function saveOrder(
       throw new Error(itemsError.message || 'Failed to save order items');
     }
 
-    /* 3️⃣ успех */
     return {
       success: true,
       orderId: orderData.id,
