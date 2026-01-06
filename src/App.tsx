@@ -13,7 +13,7 @@ import { OrderConfirmation } from './components/OrderConfirmation';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage, CheckoutData } from './pages/CheckoutPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
-import { AdminPage } from './pages/AdminPage';
+import { AdminPage } from "./pages/admin/AdminPage";
 import { ShoppingCart, Settings } from 'lucide-react';
 
 type PageType = 'menu' | 'cart' | 'checkout' | 'confirmation' | 'product-detail' | 'admin';
